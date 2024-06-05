@@ -1,4 +1,4 @@
-from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent, QColor
+from PyQt6.QtGui import QPainter, QColor
 from PyQt6.QtCore import QRect, QPoint
 from utils import random_color
 from game.components import constants
@@ -19,8 +19,10 @@ class Rectangle:
         self.end.setX(x + offsetX)
         self.end.setY(y + offsetY)
 
-    def draw(self, painter: QPainter):
         rgb = random_color.getRandomRGB()
-        painter.setBrush(QColor(*rgb))
+        self.color = QColor(*rgb)
+
+    def draw(self, painter: QPainter):
+        painter.setBrush(self.color)
         rect = QRect(self.begin, self.end)
         painter.drawRect(rect)
