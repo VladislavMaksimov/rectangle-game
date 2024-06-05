@@ -21,6 +21,8 @@ class GameField(QWidget):
         x = event.pos().x()
         y = event.pos().y()
         rect = rectangle.Rectangle(x, y)
+        if (self.rectangles.checkCollisions(rect)):
+            return
         self.rectangles.collection.append(rect)
         self.update()
         return
