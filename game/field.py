@@ -1,36 +1,29 @@
-from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent, QColor
+from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import QRect, QPoint
-from utils import random_color
+from PyQt6.QtCore import QPoint
 from game import constants
+from game.components import rectangle
 
 class GameField(QWidget):
     def __init__(self):
         super().__init__()
-        self.window_width = 640
-        self.window_height = 480
+        self.window_width = constants.WINDOW_WIDTH
+        self.window_height = constants.WINDOW_HEIGHT
         self.setMinimumSize(self.window_width, self.window_height)
         self.setWindowTitle('Rectangle game')
         self.begin = QPoint()
         self.end = QPoint()
+        self.rectangle = None
     
     def paintEvent(self, _: QPaintEvent | None) -> None:
-        if self.begin.isNull() or self.end.isNull():
+        if self.rectangle is None:
             return
         painter = QPainter(self)
-        rgb = random_color.getRandomRGB()
-        painter.setBrush(QColor(*rgb))
-        rect = QRect(self.begin, self.end)
-        painter.drawRect(rect)
+        self.rectangle.draw(painter)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent | None) -> None:
         x = event.pos().x()
         y = event.pos().y()
-        offsetX = round(constants.RECTANGLE_WIDTH / 2)
-        offsetY = round(constants.RECTANGLE_HEIGHT / 2)
-        self.begin.setX(x - offsetX)
-        self.begin.setY(y - offsetY)
-        self.end.setX(x + offsetX)
-        self.end.setY(y + offsetY)
+        self.rectangle = rectangle.Rectangle(x, y)
         self.update()
         return
