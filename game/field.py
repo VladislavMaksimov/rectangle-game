@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget
 from game import constants
-from game.components import rectangle, rectangle_collection
+from game.components import rectangle, rectangle_collection, relation_collection
 
 class GameField(QWidget):
     def __init__(self):
@@ -13,10 +13,12 @@ class GameField(QWidget):
         self.setWindowTitle('Rectangle game')
 
         self.rectangles = rectangle_collection.RectangleCollection()
+        self.relations = relation_collection.RelationCollection()
     
     def paintEvent(self, _: QPaintEvent | None) -> None:
         painter = QPainter(self)
         self.rectangles.draw(painter)
+        self.relations.draw(painter)
 
     def checkRectOutOfBorders(self, rect: rectangle.Rectangle):
         if (
@@ -34,5 +36,5 @@ class GameField(QWidget):
         rect = rectangle.Rectangle(x, y)
         if (self.rectangles.checkCollisions(rect) or self.checkRectOutOfBorders(rect)):
             return
-        self.rectangles.collection.append(rect)
+        self.rectangles.addRectangle(rect)
         self.update()
