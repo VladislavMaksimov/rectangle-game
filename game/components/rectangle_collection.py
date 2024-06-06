@@ -1,4 +1,5 @@
 from PyQt6.QtGui import QPainter
+from PyQt6.QtCore import QPoint
 from game.components import rectangle
 
 class RectangleCollection:
@@ -7,6 +8,19 @@ class RectangleCollection:
 
     def getRectangles(self):
         return self.collection
+    
+    def getRectangleByPoint(self, point: QPoint):
+        pointX = point.x()
+        pointY = point.y()
+        for rect in self.collection:
+            if (
+                rect.begin.x() <= pointX 
+                and rect.end.x() >= pointX 
+                and rect.begin.y() <= pointY 
+                and rect.end.y() >= pointY
+            ):
+                return rect
+        return None
 
     def addRectangle(self, rect: rectangle.Rectangle):
         self.collection.append(rect)
