@@ -7,8 +7,25 @@ class RelationCollection:
 
     def getRelations(self):
         return self.collection
+    
+    def checkRelationExists(self, rel_checked: relation.Relation):
+        for rel in self.collection:
+            if ((
+                    rel.rect_start.id == rel_checked.rect_start.id
+                    and rel.rect_end.id == rel_checked.rect_end.id
+                )
+                or (
+                    rel.rect_start.id == rel_checked.rect_end.id
+                    and rel.rect_end.id == rel_checked.rect_start.id
+                )
+            ):
+                return True
+        return False
 
     def addRelation(self, rel: relation.Relation):
+        relation_exists = self.checkRelationExists(rel)
+        if relation_exists:
+            return
         self.collection.append(rel)
 
     def removeRelation(self, rel: relation.Relation):

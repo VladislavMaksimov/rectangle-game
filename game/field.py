@@ -1,7 +1,8 @@
 from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget
 from game import constants
-from game.components import rectangle, rectangle_collection, relation_collection, relation
+from game.components import rectangle, rectangle_collection, relation_collection
+from game.logic import rectangle_logic, relation_logic
 
 class GameField(QWidget):
     def __init__(self):
@@ -14,7 +15,8 @@ class GameField(QWidget):
 
         self.rectangles = rectangle_collection.RectangleCollection()
         self.relations = relation_collection.RelationCollection()
-        self.relation_rect_start: rectangle.Rectangle | None = None
+        self.rectangle_logic_controller = rectangle_logic.RectangleLogicController()
+        self.relation_logic_controller = relation_logic.RelationLogicController()
     
     def paintEvent(self, _: QPaintEvent | None):
         painter = QPainter(self)
@@ -32,25 +34,18 @@ class GameField(QWidget):
         return False  
 
     def mouseDoubleClickEvent(self, event: QMouseEvent | None):
-        x = event.pos().x()
-        y = event.pos().y()
-        rect = rectangle.Rectangle(x, y)
-        if (self.rectangles.checkCollisions(rect) or self.checkRectOutOfBorders(rect)):
-            return
-        self.rectangles.addRectangle(rect)
-        self.update()
+        self.rectangle_logic_controller.createRectangleAtPoint(
+            event.pos(),
+            self.rectangles,
+            self.checkRectOutOfBorders,
+            self.update
+        )
 
     def mousePressEvent(self, event: QMouseEvent | None):
         clicked_rect = self.rectangles.getRectangleByPoint(event.pos())
-
-        if clicked_rect is None:
-            return
-        
-        if self.relation_rect_start is None:
-            self.relation_rect_start = clicked_rect
-            return
-        
-        rel = relation.Relation(self.relation_rect_start, clicked_rect)
-        self.relations.addRelation(rel)
-        self.relation_rect_start = None
-        self.update()
+        if clicked_rect:
+            self.relation_logic_controller.createRelation(
+                clicked_rect,
+                self.relations,
+                self.update
+            )
