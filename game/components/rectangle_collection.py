@@ -10,15 +10,8 @@ class RectangleCollection:
         return self.collection
     
     def getRectangleByPoint(self, point: QPoint):
-        pointX = point.x()
-        pointY = point.y()
         for rect in self.collection:
-            if (
-                rect.begin.x() <= pointX 
-                and rect.end.x() >= pointX 
-                and rect.begin.y() <= pointY 
-                and rect.end.y() >= pointY
-            ):
+            if (rect.checkPointInsideRectangle(point)):
                 return rect
         return None
 

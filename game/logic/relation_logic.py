@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from PyQt6.QtCore import QPoint
 from game.components import rectangle, relation, relation_collection
 
 class RelationLogicController():
@@ -22,5 +23,17 @@ class RelationLogicController():
         rel = relation.Relation(self.relation_rect_start, clicked_rect)
         relations.addRelation(rel)
         self.relation_rect_start = None
-        print(len(relations.collection))
+        update()
+
+    def removeRelation(
+        self,
+        clicked_point: QPoint,
+        relations: relation_collection.RelationCollection,
+        update: Callable[[], None]
+    ):
+        rel = relations.getRelationByPoint(clicked_point)
+        if rel is None:
+            return
+        
+        relations.removeRelation(rel)
         update()

@@ -1,3 +1,4 @@
+from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QPainter
 from game.components import relation
 
@@ -8,6 +9,12 @@ class RelationCollection:
     def getRelations(self):
         return self.collection
     
+    def getRelationByPoint(self, point: QPoint):
+        for rel in self.collection:
+            if rel.checkPointOnRelation(point):
+                return rel
+        return None
+
     def checkRelationExists(self, rel_checked: relation.Relation):
         for rel in self.collection:
             if ((

@@ -30,6 +30,19 @@ class Rectangle:
         center_y = round(self.begin.y() + self.height / 2)
         return QPoint(center_x, center_y)
 
+    def checkPointInsideRectangle(self, point: QPoint):
+        pointX = point.x()
+        pointY = point.y()
+        if (
+            self.begin.x() <= pointX 
+            and self.end.x() >= pointX 
+            and self.begin.y() <= pointY 
+            and self.end.y() >= pointY
+        ):
+            return True
+        else:
+            return False
+
     def draw(self, painter: QPainter):
         painter.setBrush(self.color)
         rect = QRect(self.begin, self.end)

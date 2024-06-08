@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QWidget
 from game import constants
@@ -42,10 +43,21 @@ class GameField(QWidget):
         )
 
     def mousePressEvent(self, event: QMouseEvent | None):
-        clicked_rect = self.rectangles.getRectangleByPoint(event.pos())
-        if clicked_rect:
-            self.relation_logic_controller.createRelation(
-                clicked_rect,
+        clicked_point = event.pos()
+        
+        if event.button() == Qt.MouseButton.LeftButton:
+            clicked_rect = self.rectangles.getRectangleByPoint(clicked_point)
+            if clicked_rect:
+                self.relation_logic_controller.createRelation(
+                    clicked_rect,
+                    self.relations,
+                    self.update
+                )
+            return
+        
+        if event.button() == Qt.MouseButton.RightButton:
+            self.relation_logic_controller.removeRelation(
+                clicked_point,
                 self.relations,
                 self.update
             )
