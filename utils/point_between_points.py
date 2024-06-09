@@ -1,4 +1,6 @@
-
+# Проверяет, лежит ли точка point_to_check на прямой между point1 и point2
+# Точки задаются кортежем из двух чисел: (x, y)
+# calc_error определяет, насколько далеко точка может отстоять от прямой, чтобы считаться "лежащей" на ней 
 def checkPointBetweenPoints(
     point1: tuple[int, int],
     point2: tuple[int, int],
@@ -13,6 +15,7 @@ def checkPointBetweenPoints(
 
     if max(alpha_x, alpha_y) - min(alpha_x, alpha_y) > calc_error:
         return False
+    # Проверяем, не лежит ли точка на прямой, но не между point1 и point2
     if alpha_x < 0 or alpha_x > 1 or alpha_y < 0 or alpha_y > 1:
         return False
     

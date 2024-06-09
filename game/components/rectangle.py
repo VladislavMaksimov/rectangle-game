@@ -1,3 +1,4 @@
+from __future__ import annotations
 from uuid import uuid4
 from PyQt6.QtGui import QPainter, QColor
 from PyQt6.QtCore import QRect, QPoint
@@ -42,7 +43,18 @@ class Rectangle:
             return True
         else:
             return False
-
+        
+    def checkCollision(self, rect_check: Rectangle):
+        x_delta = abs(self.begin.x() - rect_check.begin.x())
+        y_delta = abs(self.begin.y() - rect_check.begin.y())
+        
+        if (
+             x_delta < constants.RECTANGLE_WIDTH
+             and y_delta < constants.RECTANGLE_HEIGHT
+        ):
+            return True
+        return False
+    
     def draw(self, painter: QPainter):
         painter.setBrush(self.color)
         rect = QRect(self.begin, self.end)

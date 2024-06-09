@@ -28,6 +28,7 @@ class GameField(QWidget):
         self.rectangles.draw(painter)
         self.relations.draw(painter)
 
+    # Проверяем, не выходит ли прямоугольник за пределы сцены
     def checkRectOutOfBorders(self, rect: rectangle.Rectangle):
         if (
             self.window_width < rect.end.x() 
@@ -73,11 +74,11 @@ class GameField(QWidget):
     
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         cursor_position = event.pos()
-        self.rect_drag_drop_logic_controller.drag(cursor_position, self.update)
+        self.rect_drag_drop_logic_controller.drag(
+            cursor_position,
+            self.rectangles,
+            self.update
+        )
     
     def mouseReleaseEvent(self, _: QMouseEvent) -> None:
-        self.rect_drag_drop_logic_controller.endDragging(
-            self.rectangles,
-            self.update,
-            self.checkRectOutOfBorders
-        )
+        self.rect_drag_drop_logic_controller.endDragging()

@@ -20,15 +20,10 @@ class RectangleCollection:
 
     def checkCollisions(self, rect_check: rectangle.Rectangle):
         for rect in self.collection:
-            if (
-                rect.id == rect_check.id
-                or rect.end.x() < rect_check.begin.x()
-                or rect.end.y() < rect_check.begin.y()
-                or rect.begin.x() > rect_check.end.x()
-                or rect.begin.y() > rect_check.end.y()
-            ):
+            if rect.id == rect_check.id:
                 continue
-            return True
+            if rect.checkCollision(rect_check):
+                return True
         return False
 
     def draw(self, painter: QPainter):
