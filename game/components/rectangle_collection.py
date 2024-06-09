@@ -11,7 +11,7 @@ class RectangleCollection:
     
     def getRectangleByPoint(self, point: QPoint):
         for rect in self.collection:
-            if (rect.checkPointInsideRectangle(point)):
+            if rect.checkPointInsideRectangle(point):
                 return rect
         return None
 
@@ -21,7 +21,8 @@ class RectangleCollection:
     def checkCollisions(self, rect_check: rectangle.Rectangle):
         for rect in self.collection:
             if (
-                rect.end.x() < rect_check.begin.x()
+                rect.id == rect_check.id
+                or rect.end.x() < rect_check.begin.x()
                 or rect.end.y() < rect_check.begin.y()
                 or rect.begin.x() > rect_check.end.x()
                 or rect.begin.y() > rect_check.end.y()

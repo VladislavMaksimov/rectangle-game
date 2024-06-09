@@ -22,6 +22,10 @@ class Relation:
             calc_error = 0.5
         )
 
+    def move(self):
+        self.start_point = self.rect_start.getCenter()
+        self.end_point = self.rect_end.getCenter()
+
     def draw(self, painter: QPainter):
         rel = QLine(self.start_point, self.end_point)
         painter.drawLine(rel)

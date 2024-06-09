@@ -1,3 +1,4 @@
+from uuid import UUID
 from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QPainter
 from game.components import relation
@@ -14,6 +15,13 @@ class RelationCollection:
             if rel.checkPointOnRelation(point):
                 return rel
         return None
+    
+    def getRelationsByRectId(self, id: UUID):
+        foundRelations = []
+        for rel in self.collection:
+            if rel.rect_start.id == id or rel.rect_end.id == id:
+                foundRelations.append(rel)
+        return foundRelations
 
     def checkRelationExists(self, rel_checked: relation.Relation):
         for rel in self.collection:
