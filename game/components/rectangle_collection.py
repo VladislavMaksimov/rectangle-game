@@ -1,31 +1,30 @@
-from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QPoint
 from game.components import rectangle
 
 class RectangleCollection:
     def __init__(self, initial_collection: list[rectangle.Rectangle] = []):
-        self.collection = initial_collection
+        self.__collection = initial_collection
 
     def getRectangles(self):
-        return self.collection
+        return self.__collection
     
     def getRectangleByPoint(self, point: QPoint):
-        for rect in self.collection:
-            if rect.checkPointInsideRectangle(point):
+        for rect in self.__collection:
+            if rect.contains(point):
                 return rect
         return None
-
-    def addRectangle(self, rect: rectangle.Rectangle):
-        self.collection.append(rect)
-
+    
     def checkCollisions(self, rect_check: rectangle.Rectangle):
-        for rect in self.collection:
-            if rect.id == rect_check.id:
+        for rect in self.__collection:
+            if rect_check == rect:
                 continue
-            if rect.checkCollision(rect_check):
+            if rect_check.intersects(rect):
                 return True
         return False
 
-    def draw(self, painter: QPainter):
-        for rect in self.collection:
-            rect.draw(painter)
+    def addRectangle(self, rect: rectangle.Rectangle):
+        if not self.checkCollisions(rect):
+            self.__collection.append(rect)
+            return True
+        return False
+

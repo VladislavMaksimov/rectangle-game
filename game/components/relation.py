@@ -1,31 +1,32 @@
-from uuid import uuid4
-from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QLine, QPoint
 from utils import point_between_points
 from game.components import rectangle
 
-class Relation:
+class Relation(QLine):
     def __init__(self, rect_start: rectangle.Rectangle, rect_end: rectangle.Rectangle):
-        self.id = uuid4()
-
-        self.rect_start = rect_start
-        self.rect_end = rect_end
-
-        self.start_point = rect_start.getCenter()
-        self.end_point = rect_end.getCenter()
+        self.__rect_start = rect_start
+        self.__rect_end = rect_end
+        super().__init__(self.__rect_start.center(), self.__rect_end.center())
 
     def checkPointOnRelation(self, point: QPoint):
+        rel_p1 = (self.x1(), self.y1())
+        rel_p2 = (self.x2(), self.y2())
+        point_to_check = (point.x(), point.y())
+            
         return point_between_points.checkPointBetweenPoints(
-            (self.start_point.x(), self.start_point.y()),
-            (self.end_point.x(), self.end_point.y()),
-            (point.x(), point.y()),
-            calc_error = 0.5
+            rel_p1,
+            rel_p2,
+            point_to_check,
+            0.5
         )
+    
+    def checkConnectRect(self, rect: rectangle.Rectangle):
+        if self.__rect_start == rect or self.__rect_end == rect:
+            return True
+        return False
 
     def move(self):
-        self.start_point = self.rect_start.getCenter()
-        self.end_point = self.rect_end.getCenter()
-
-    def draw(self, painter: QPainter):
-        rel = QLine(self.start_point, self.end_point)
-        painter.drawLine(rel)
+        self.setPoints(
+            self.__rect_start.center(),
+            self.__rect_end.center()
+        )

@@ -1,131 +1,137 @@
-from PyQt6.QtCore import QPoint, QRect
+from collections import namedtuple
+from collections.abc import Callable
 from PyQt6.QtGui import QCursor
-from game.components import rectangle, relation, relation_collection, rectangle_collection, constants as component_constants
-from game import constants as game_constants
+from PyQt6.QtCore import QPoint
+from game.components import rectangle, relation, relation_collection, rectangle_collection
 
 class DragDropRectLogicController:
     def __init__(self):
-        self.dragged_rect: rectangle.Rectangle | None = None
-        self.dragged_rect_relations: list[relation.Relation] | None = None
-        self.initial_begin_point: QPoint | None = None
-        self.initial_end_point: QPoint | None = None
-        self.cursor_offset_x: int | None = None
-        self.cursor_offset_y: int | None = None
-        self.prev_cursor_position: QPoint | None = None
+        self.__dragged_rect: rectangle.Rectangle | None = None
+        self.__dragged_rect_relations: list[relation.Relation] | None = None
+        self.__prev_cursor_pos: QPoint | None = None
+
+    # Меняем координаты связей после переноса прямоугольника
+    def __moveRelations(self):
+        for rel in self.__dragged_rect_relations:
+            rel.move()
+
+    # Находим отступ от коллизии
+    def __getDragOffset(
+        self,
+        initial_top_left: QPoint,
+        intersected_rect: rectangle.Rectangle
+    ):
+        offset_x = 0
+        offset_y = 0
+
+        if initial_top_left.x() < intersected_rect.topLeft().x():
+            offset_x = intersected_rect.topLeft().x() - (initial_top_left.x() + self.__dragged_rect.width())
+        else:
+            offset_x = intersected_rect.bottomRight().x() - initial_top_left.x()
+
+        if initial_top_left.y() < intersected_rect.topLeft().y():
+            offset_y = intersected_rect.topLeft().y() - (initial_top_left.y() + self.__dragged_rect.height())
+        else:
+            offset_y = intersected_rect.bottomRight().y() - initial_top_left.y()
+
+        Offset = namedtuple('Offset', ['x', 'y'])
+        return Offset(offset_x, offset_y)
 
     def startDragging(
         self,
         cursor_position: QPoint,
-        dragged_rect: rectangle.Rectangle,
+        rectangles: rectangle_collection.RectangleCollection,
         relations: relation_collection.RelationCollection
     ):
-        self.dragged_rect = dragged_rect
-
-        self.initial_begin_point = QPoint(dragged_rect.begin)
-        self.initial_end_point = QPoint(dragged_rect.end)
-
-        self.prev_cursor_position = QPoint(cursor_position)
-        self.cursor_offset_x = cursor_position.x() - dragged_rect.begin.x()
-        self.cursor_offset_y = cursor_position.y() - dragged_rect.begin.y()
-
-        self.dragged_rect_relations = relations.getRelationsByRectId(dragged_rect.id)
-
-    def __moveRelations(self):
-        if self.dragged_rect_relations is None:
+        self.__dragged_rect = rectangles.getRectangleByPoint(cursor_position)
+        if self.__dragged_rect is None:
             return
-
-        for rel in self.dragged_rect_relations:
-            rel.move()
+        self.__dragged_rect_relations = relations.getRelationsByRect(self.__dragged_rect)
+        self.__dragged_rect.startDragging(cursor_position)
 
     def drag(
         self,
-        cursor_position: QPoint,
+        to_point: QPoint,
         rectangles: rectangle_collection.RectangleCollection,
-        update
+        checkRectOutOfBounds: Callable[[rectangle.Rectangle], bool],
+        field_width: int,
+        field_height: int,
     ):
-        if self.dragged_rect is None:
-            return
+        if self.__dragged_rect is None:
+            return False
+                
+        initial_top_left = QPoint(self.__dragged_rect.topLeft())
+        self.__dragged_rect.drag(to_point)
 
-        new_begin_x = cursor_position.x() - self.cursor_offset_x
-        new_begin_y = cursor_position.y() - self.cursor_offset_y
-
-        # Ограничиваем перемещение прямоугольников внутри границ сцены
-        new_begin_x = max(
-            0,
-            min(
-                new_begin_x,
-                game_constants.WINDOW_WIDTH - component_constants.RECTANGLE_WIDTH
-            )
-        )
-        new_begin_y = max(
-            0,
-            min(
-                new_begin_y,
-                game_constants.WINDOW_HEIGHT - component_constants.RECTANGLE_HEIGHT
-            )
-        )
-
-        new_rect = QRect(
-            new_begin_x,
-            new_begin_y,
-            component_constants.RECTANGLE_WIDTH,
-            component_constants.RECTANGLE_HEIGHT
-        )
-
-        for rect in rectangles.getRectangles():
-            if (
-                rect.id != self.dragged_rect.id
-                # Проверяем пересечение переносимого прямоугольника с каждым прямоугольником  из коллекции
-                and new_rect.intersects(
-                    QRect(
-                        rect.begin.x(),
-                        rect.begin.y(),
-                        component_constants.RECTANGLE_WIDTH,
-                        component_constants.RECTANGLE_HEIGHT
-                    )
+        if checkRectOutOfBounds(self.__dragged_rect):
+            new_top_left_x = max(
+                0,
+                min(
+                    self.__dragged_rect.topLeft().x(),
+                    field_width - self.__dragged_rect.width()
                 )
-            ):
-                offset_x = 0
-                offset_y = 0
-                if new_begin_x < rect.begin.x():
-                    offset_x = rect.begin.x() - (new_begin_x + component_constants.RECTANGLE_WIDTH)
-                else:
-                    offset_x = rect.end.x() - new_begin_x
-                if new_begin_y < rect.begin.y():
-                    offset_y = rect.begin.y() - (new_begin_y + component_constants.RECTANGLE_HEIGHT)
-                else:
-                    offset_y = rect.end.y() - new_begin_y
+            )
+            new_top_left_y = max(
+                0,
+                min(
+                    self.__dragged_rect.topLeft().y(),
+                    field_height - self.__dragged_rect.height()
+                )
+            )
+            new_top_left = QPoint(new_top_left_x, new_top_left_y)
+
+            # Делаем так, чтобы прямоугольник упирался в границу
+            self.__dragged_rect.drag(
+                new_top_left + self.__dragged_rect.dragOffset()
+            )
+
+            # Держим курсор на месте
+            if self.__prev_cursor_pos:
+                QCursor.setPos(self.__prev_cursor_pos)
+
+        # Проверяем пересечение переносимого прямоугольника с каждым прямоугольником  из коллекции
+        for rect in rectangles.getRectangles():
+            if self.__dragged_rect != rect and self.__dragged_rect.intersects(rect):
+                drag_offset = self.__getDragOffset(
+                    initial_top_left,
+                    rect
+                )
 
                 # Смещаем прямоугольник по оси минимального пересечения
-                # Смещаем вместе с ним курсор, чтобы перетаскиваемый прямоугольник упирался в другой
-                if abs(offset_x) < abs(offset_y):
-                    new_begin_x += offset_x
-                    QCursor.setPos(QCursor.pos().x() + offset_x, QCursor.pos().y())
+                if (abs(drag_offset.x) < abs(drag_offset.y)):
+                    new_top_left = QPoint(
+                        initial_top_left.x() + drag_offset.x,
+                        initial_top_left.y()
+                    )
                 else:
-                    new_begin_y += offset_y
-                    QCursor.setPos(QCursor.pos().x(), QCursor.pos().y() + offset_y)
+                    new_top_left = QPoint(
+                        initial_top_left.x(),
+                        initial_top_left.y() + drag_offset.y
+                    )
 
-                self.dragged_rect.begin.setX(new_begin_x)
-                self.dragged_rect.begin.setY(new_begin_y)
-                self.dragged_rect.end.setX(new_begin_x + component_constants.RECTANGLE_WIDTH)
-                self.dragged_rect.end.setY(new_begin_y + component_constants.RECTANGLE_HEIGHT)
+                # Держим курсор на месте, чтобы нельзя было "перескочить" через коллизию
+                if self.__prev_cursor_pos:
+                    QCursor.setPos(self.__prev_cursor_pos)
 
-        self.dragged_rect.begin.setX(new_begin_x)
-        self.dragged_rect.begin.setY(new_begin_y)
-        self.dragged_rect.end.setX(new_begin_x + component_constants.RECTANGLE_WIDTH)
-        self.dragged_rect.end.setY(new_begin_y + component_constants.RECTANGLE_HEIGHT)
+                # Делаем так, чтобы прямоугольник упирался в коллизию
+                self.__dragged_rect.drag(
+                    new_top_left + self.__dragged_rect.dragOffset()
+                )
+
+                self.__moveRelations()
+                self.__prev_cursor_pos = QPoint(QCursor.pos())
+
+                return True
 
         self.__moveRelations()
 
-        self.prev_cursor_position = QPoint(cursor_position)
+        self.__prev_cursor_pos = QPoint(QCursor.pos())
+        return True
 
-        update()
-
-
-    def endDragging(self):
-        self.dragged_rect = None
-        self.initial_begin_point = None
-        self.initial_end_point = None
-        self.cursor_offset_x = None
-        self.cursor_offset_y = None
-        self.prev_cursor_position = None
+    def stopDragging(self):
+        if self.__dragged_rect is None:
+            return
+        
+        self.__dragged_rect.stopDragging()
+        self.__dragged_rect = None
+        self.__dragged_rect_relations = None

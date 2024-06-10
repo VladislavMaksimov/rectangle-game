@@ -1,61 +1,37 @@
-from __future__ import annotations
-from uuid import uuid4
-from PyQt6.QtGui import QPainter, QColor
-from PyQt6.QtCore import QRect, QPoint
+from PyQt6.QtCore import Qt, QRect, QSize, QPoint
 from utils import random_color
-from game.components import constants
 
-class Rectangle:
-    def __init__(self, x: int, y: int):
-        self.id = uuid4()
+RECTANGLE_WIDTH = 200
+RECTANGLE_HEIGHT = 100
 
-        self.width = constants.RECTANGLE_WIDTH
-        self.height = constants.RECTANGLE_HEIGHT
+class Rectangle(QRect):
+    def __init__(self, creation_point: QPoint):
+        atopLeft = QPoint(
+            creation_point.x() - round(RECTANGLE_WIDTH / 2),
+            creation_point.y() - round(RECTANGLE_HEIGHT / 2)
+        )
+        asize = QSize(RECTANGLE_WIDTH, RECTANGLE_HEIGHT)
+        super().__init__(atopLeft, asize)
 
-        self.begin = QPoint()
-        self.end = QPoint()
+        self.__background_color = random_color.getRandomRGB()
 
-        offset_x = round(constants.RECTANGLE_WIDTH / 2)
-        offset_y = round(constants.RECTANGLE_HEIGHT / 2)
-
-        self.begin.setX(x - offset_x)
-        self.begin.setY(y - offset_y)
-        self.end.setX(x + offset_x)
-        self.end.setY(y + offset_y)
-
-        rgb = random_color.getRandomRGB()
-        self.color = QColor(*rgb)
-
-    def getCenter(self):
-        center_x = round(self.begin.x() + self.width / 2)
-        center_y = round(self.begin.y() + self.height / 2)
-        return QPoint(center_x, center_y)
-
-    def checkPointInsideRectangle(self, point: QPoint):
-        pointX = point.x()
-        pointY = point.y()
-        if (
-            self.begin.x() <= pointX 
-            and self.end.x() >= pointX 
-            and self.begin.y() <= pointY 
-            and self.end.y() >= pointY
-        ):
-            return True
-        else:
-            return False
-        
-    def checkCollision(self, rect_check: Rectangle):
-        x_delta = abs(self.begin.x() - rect_check.begin.x())
-        y_delta = abs(self.begin.y() - rect_check.begin.y())
-        
-        if (
-             x_delta < constants.RECTANGLE_WIDTH
-             and y_delta < constants.RECTANGLE_HEIGHT
-        ):
-            return True
-        return False
+        self.__dragging = False
+        self.__drag_offset = QPoint()
     
-    def draw(self, painter: QPainter):
-        painter.setBrush(self.color)
-        rect = QRect(self.begin, self.end)
-        painter.drawRect(rect)
+    def backgroundColor(self):
+        return self.__background_color
+    
+    def dragOffset(self):
+        return self.__drag_offset
+    
+    def startDragging(self, cursor_position: QPoint):
+        self.__dragging = True
+        self.__drag_offset = cursor_position - self.topLeft()
+
+    def drag(self, cursor_position: QPoint):
+        if self.__dragging:
+            new_top_left = cursor_position - self.__drag_offset
+            self.moveTopLeft(new_top_left)
+
+    def stopDragging(self):
+        self.__dragging = False
